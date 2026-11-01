@@ -100,7 +100,7 @@ def download_apk():
     if os.path.exists(static_apk):
         target = static_apk
     else:
-        target = r'C:\Users\intel\Desktop\ExpiryGuard_AI.apk'
+        target = os.path.join(os.path.expanduser('~'), 'Desktop', 'ExpiryGuard_AI.apk')
     if not os.path.exists(target):
         return jsonify({'error': 'APK file not found on server.'}), 404
     return send_file(

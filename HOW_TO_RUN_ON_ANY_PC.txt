@@ -1,0 +1,35 @@
+======================================================================
+  EXPIRYGUARD AI — HOW TO RUN ON ANY LAPTOP / PC
+======================================================================
+
+Option 1: NO INSTALLATION NEEDED (Recommended)
+----------------------------------------------------------------------
+ExpiryGuard AI is already deployed and running 24/7 online!
+Just open this URL in Chrome, Edge, or Firefox on any phone or laptop:
+  👉 https://expiryguard-ai-7hs2.onrender.com
+
+Login Credentials:
+  Username: admin
+  Password: admin 123
+
+
+Option 2: RUN LOCALLY ON YOUR LAPTOP (Step-by-Step)
+----------------------------------------------------------------------
+Prerequisite:
+  Python 3.10+ must be installed on your laptop.
+  If you don't have Python, download it from:
+  https://www.python.org/downloads/
+  *** IMPORTANT: Check the box "Add Python to PATH" during installation! ***
+
+How to Run:
+  1. Extract this ZIP folder anywhere (e.g., Desktop or Documents).
+  2. Double-click "RUN_PROJECT.bat".
+  3. That's it!
+     - It will automatically install all required packages (Flask, Pandas, etc.)
+     - It will start the server
+     - It will automatically open http://localhost:5000 in your browser!
+
+Default Login:
+  Username: admin
+  Password: admin 123
+======================================================================
