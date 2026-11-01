@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ t('analytics_title') }}</h1>
+    <p class="page-subtitle">{{ t('analytics_subtitle') }}</p>
+  </div>
+</div>
+
+<!-- High-Level Metric Tiles Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px;">
+  
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('metric_total_revenue') }}</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary-dark); margin-top: 6px;">
+      {{ summary.total_revenue | currency }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
+      Across all transactions
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('metric_total_units_sold') }}</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-top: 6px;">
+      {{ summary.total_units_sold }} <small style="font-size: 0.85rem; font-weight: 500;">items</small>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
+      Total stock liquidated
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('metric_avg_sale') }}</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-top: 6px;">
+      {{ summary.avg_sale_value | currency }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
+      Per transaction average
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 0; padding: 16px; border-color: #fca5a5;">
+    <div style="font-size: 0.85rem; font-weight: 700; color: var(--color-expired);">{{ t('metric_waste_avoidance') }}</div>
+    <div style="font-size: 1.6rem; font-weight: 800; color: var(--color-expired); margin-top: 6px;">
+      {{ summary.at_risk_value | currency }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--color-expired); margin-top: 2px;">
+      Stock needing fast discount
+    </div>
+  </div>
+
+</div>
+
+<!-- Interactive Charts (Chart.js) -->
+<div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+  
+  <!-- 1. Sales Trend Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <span>📈</span> {{ t('chart_sales_trend') }}
+      </div>
+    </div>
+    <div style="position: relative; height: 300px; width: 100%;">
+      <canvas id="chart-sales-trend"></canvas>
+    </div>
+  </div>
+
+  <!-- 2. Dual Column for Expiry Health & Top Selling Products -->
+  <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+    
+    <!-- Expiry Health Breakdown -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>🎯</span> {{ t('chart_expiry_breakdown') }}
+        </div>
+      </div>
+      <div style="position: relative; height: 280px; width: 100%;">
+        <canvas id="chart-expiry-distribution"></canvas>
+      </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>🏆</span> {{ t('chart_top_products') }}
+        </div>
+      </div>
+      <div style="position: relative; height: 280px; width: 100%;">
+        <canvas id="chart-top-products"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

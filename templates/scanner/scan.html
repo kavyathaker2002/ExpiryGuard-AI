@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div><h1 class="page-title">{{ t('scan_title') }}</h1><p class="page-subtitle">{{ t('scan_subtitle') }}</p></div>
+</div>
+
+<div class="scanner-page-grid">
+  <section class="scan-tools-column">
+    <div class="card scanner-tool-card">
+      <div class="card-header"><h2 class="card-title">📸 Product Photo</h2></div>
+      <p class="text-muted">Free scan: photo OCR reads clear text; scanning a barcode can look up product details. Verify dates, price, and stock before saving.</p>
+      <div class="scanner-action-grid">
+        <button type="button" id="btn-open-capture-camera" class="btn btn-primary btn-lg">📸 Take Photo</button>
+        <label class="btn btn-secondary btn-lg upload-action">🖼️ Upload Image<input type="file" id="camera-file-input" accept="image/jpeg,image/png,image/webp" hidden></label>
+      </div>
+      <p id="scanner-error" class="scanner-message" role="status" aria-live="polite"></p>
+      <div id="capture-camera-wrap" class="scanner-container" style="display:none">
+        <div class="camera-toolbar"><label for="capture-camera-select">Camera</label><select id="capture-camera-select" class="form-input"></select></div>
+        <div class="scanner-video-wrap"><video id="capture-video" playsinline autoplay muted></video></div>
+        <div class="scanner-controls"><button type="button" id="btn-capture-photo" class="btn btn-primary">Capture photo</button><button type="button" id="btn-close-capture-camera" class="btn btn-outline">Close camera</button></div>
+      </div>
+      <div id="image-preview-card" class="image-preview-card" style="display:none">
+        <div class="d-flex justify-between align-center mb-2"><strong>Photo preview</strong><button type="button" id="btn-retake-photo" class="btn btn-outline">Retake / replace</button></div>
+        <div class="image-preview-wrap"><img id="image-preview" src="" alt="Product package photo"><div id="ocr-progress-overlay" class="ocr-progress-overlay" style="display:none"><span class="scanner-spinner"></span><span id="ocr-progress-text">Analyzing image…</span></div></div>
+      </div>
+      <div id="extracted-summary-box" class="ocr-feedback-box" style="display:none"><strong>Recognized details</strong><p id="recognition-status-badge" class="scanner-message"></p><div id="extracted-items-grid" class="extracted-fields-grid"></div></div>
+      <div id="existing-product-notice" class="alert alert-info mt-2" style="display:none"></div>
+    </div>
+
+    <div class="card barcode-scanner-card">
+      <div class="card-header"><h2 class="card-title">▦ Barcode Scanner</h2></div>
+      <p class="text-muted">Scan a retail barcode or QR code, upload an image, or enter the code yourself.</p>
+      <div class="barcode-action-grid">
+        <button type="button" id="btn-toggle-camera" class="btn btn-primary">▦ Scan barcode with camera</button>
+        <button type="button" id="btn-scan-qr" class="btn btn-outline">▧ Scan QR code with camera</button>
+        <label class="btn btn-outline upload-action">Upload barcode / QR image<input type="file" id="barcode-file-input" accept="image/jpeg,image/png,image/webp" hidden></label>
+      </div>
+      <div id="live-camera-wrap" class="scanner-container" style="display:none">
+        <div class="camera-toolbar"><label for="barcode-camera-select">Camera</label><select id="barcode-camera-select" class="form-input"></select></div>
+        <div class="scanner-video-wrap"><video id="scanner-video" playsinline autoplay muted></video><div class="scanner-overlay"><div class="scanner-guide-box"><div class="scanner-corner corner-tl"></div><div class="scanner-corner corner-tr"></div><div class="scanner-corner corner-bl"></div><div class="scanner-corner corner-br"></div><div class="scanner-laser"></div></div></div></div>
+        <div class="scanner-controls"><button type="button" id="btn-close-live-cam" class="btn btn-outline">Stop camera</button></div>
+      </div>
+      <p id="barcode-scan-status" class="scanner-message" role="status" aria-live="polite">Ready to scan EAN-13, EAN-8, UPC, Code 128, or QR codes.</p>
+    </div>
+  </section>
+
+  <section class="product-form-column">
+    <div class="card">
+      <div class="card-header"><h2 class="card-title">📝 Product Details</h2><button type="button" id="btn-rescan-form" class="btn btn-outline">Clear form</button></div>
+      <p class="text-muted">Review and edit recognized values. Unclear or missing package details stay blank.</p>
+      <form id="product-form">
+        <div class="product-form-grid">
+          <div class="form-group"><label class="form-label" for="field-product-name">{{ t('field_product_name') }} *</label><input type="text" id="field-product-name" name="product_name" class="form-input" placeholder="Product name" required></div>
+          <div class="form-group"><label class="form-label" for="field-brand">Brand</label><input type="text" id="field-brand" name="brand" class="form-input" placeholder="Brand, if visible"></div>
+          <div class="form-group"><label class="form-label" for="field-category">Category</label><input type="text" id="field-category" name="category" class="form-input" placeholder="e.g. Dairy"></div>
+          <div class="form-group"><label class="form-label" for="field-package-size">Package quantity / weight</label><input type="text" id="field-package-size" name="package_size" class="form-input" placeholder="e.g. 500 ml"></div>
+          <div class="form-group"><label class="form-label" for="field-mfg-date">{{ t('field_mfg_date') }} *</label><input type="date" id="field-mfg-date" name="mfg_date" class="form-input" required></div>
+          <div class="form-group"><label class="form-label" for="field-expiry-date">{{ t('field_expiry_date') }} *</label><input type="date" id="field-expiry-date" name="expiry_date" class="form-input" required></div>
+          <div class="form-group" style="grid-column: 1 / -1;"><label class="form-label" for="field-barcode">{{ t('field_barcode') }} *</label><input type="text" id="field-barcode" name="barcode" class="form-input" placeholder="{{ t('placeholder_barcode') }}" autocomplete="off"></div>
+          <div class="form-group"><label class="form-label" for="field-quantity">{{ t('field_quantity') }} *</label><input type="number" id="field-quantity" name="quantity" class="form-input" min="0" step="1" placeholder="Enter counted units" required></div>
+          <div class="form-group"><label class="form-label" for="field-price">{{ t('field_price') }} (₹) *</label><input type="number" id="field-price" name="price" class="form-input" min="0" step="0.01" placeholder="0.00" required></div>
+        </div>
+        <button type="submit" id="btn-submit-product" class="btn btn-primary btn-block btn-lg mt-4" data-update-mode="false">💾 {{ t('btn_save_product') }}</button>
+      </form>
+    </div>
+    <div class="card sample-presets-card">
+      <h3 class="card-title">⚡ Sample autofill presets</h3><p class="text-muted">Optional demo data. Scanning a real photo remains separate.</p>
+      <div class="sample-preset-list">
+        <button type="button" class="btn btn-outline" onclick="testSampleBarcode('8901063102123')">Britannia Bread</button>
+        <button type="button" class="btn btn-outline" onclick="testSampleBarcode('8901262010053')">Amul Milk</button>
+        <button type="button" class="btn btn-outline" onclick="testSampleBarcode('8901648001019')">Paneer 200g</button>
+        <button type="button" class="btn btn-outline" onclick="testSampleBarcode('8901058852415')">Maggi Noodles</button>
+      </div>
+    </div>
+  </section>
+
+  <aside class="phone-qr-side-col">
+    <div class="card text-center phone-connect-card">
+      <div class="phone-connect-icon">📱</div><h2>Open on mobile</h2>
+      <p class="text-muted">Scan this QR code while your phone and computer are on the same Wi-Fi network.</p>
+      <div class="phone-qr-frame"><img id="phone-connect-qr" src="{{ url_for('connect.phone_qr_code') }}" alt="QR code to open ExpiryGuard AI on your phone" onerror="this.hidden=true"></div>
+      <div id="phone-connection-status" class="scanner-message" role="status">Checking network address…</div>
+      <div id="phone-direct-link" class="phone-direct-link">Loading connection link…</div>
+      <p class="scanner-help">The QR opens this same running Flask app and database. Sign in on your phone. Camera streaming in mobile browsers needs HTTPS or localhost; the Take Photo button can use the phone's native camera picker.</p>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+fetch('{{ url_for("connect.phone_connect_info") }}').then(r => r.json()).then(data => {
+  const link = document.getElementById('phone-direct-link');
+  const status = document.getElementById('phone-connection-status');
+  if (!data.available || !data.url) { status.textContent = data.message || 'No network address detected.'; link.textContent = 'QR connection unavailable'; document.getElementById('phone-connect-qr').hidden = true; return; }
+  const target = `${data.url}/login`;
+  const a = document.createElement('a'); a.href = target; a.textContent = target; link.replaceChildren(a);
+  status.textContent = data.available ? 'LAN/public address detected. Connect the phone to the same network.' : (data.message || 'No network address detected.');
+}).catch(() => { document.getElementById('phone-connection-status').textContent = 'Could not determine a network address. Set PUBLIC_APP_URL for a tunnel or deployed site.'; });
+</script>
+<script src="{{ url_for('static', filename='js/scanner.js', v='27') }}"></script>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ shop_name }}</h1>
+    <p class="page-subtitle">{{ t('app_tagline') }}</p>
+  </div>
+  <div class="d-flex gap-2 mt-2 mt-md-0">
+    <a href="{{ url_for('scanner.scan') }}" class="btn btn-primary">
+      <span>📷</span> {{ t('nav_scan') }}
+    </a>
+    <a href="{{ url_for('sales.quick_sales') }}" class="btn btn-secondary">
+      <span>⚡</span> {{ t('nav_quick_sales') }}
+    </a>
+  </div>
+</div>
+
+<!-- Urgent Alerts Carousel / Banner -->
+{% if urgent_alerts and urgent_alerts|length > 0 %}
+<div class="card" style="border-left: 6px solid var(--color-expired); background: linear-gradient(to right, #fff, var(--bg-subtle));">
+  <div class="card-header" style="border-bottom: none; margin-bottom: 8px; padding-bottom: 0;">
+    <div class="card-title" style="color: var(--color-expired); font-size: 1.1rem;">
+      <span>⚠️</span> {{ t('dash_urgent_alerts') }} ({{ urgent_alerts|length }})
+    </div>
+    <a href="{{ url_for('inventory.index', filter='7days') }}" class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem; min-height: 32px;">
+      {{ t('dash_view_all') }} →
+    </a>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 10px;">
+    {% for alert in urgent_alerts %}
+    <div style="background: #fff; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow-sm);">
+      <div>
+        <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">
+          {{ alert.product['product_name'] }}
+        </div>
+        <div class="d-flex align-center gap-2 mt-1">
+          {% if alert.urgency == 'expired' %}
+          <span class="badge badge-danger">{{ t('status_expired') }}</span>
+          {% elif alert.days_left == 0 %}
+          <span class="badge badge-orange">{{ t('status_today') }}</span>
+          {% else %}
+          <span class="badge badge-orange">{{ t('status_critical', days=alert.days_left) }}</span>
+          {% endif %}
+          <small class="text-muted">{{ alert.product['quantity'] }} {{ t('units') }}</small>
+        </div>
+      </div>
+      <div>
+        <a href="{{ url_for('sales.quick_sales') }}" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.82rem; min-height: 34px;">
+          {{ t('dash_sell_now') }}
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Key Metrics Summary Grid (Mobile-friendly responsive grid) -->
+<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 24px;">
+  
+  <!-- Total Products -->
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="d-flex justify-between align-center">
+      <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('dash_total_products') }}</span>
+      <span style="font-size: 1.4rem;">📦</span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-top: 6px;">
+      {{ stats.total_products }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
+      {{ stats.total_stock_qty }} {{ t('units') }}
+    </div>
+  </div>
+
+  <!-- Total Inventory Value -->
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="d-flex justify-between align-center">
+      <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('dash_inventory_value') }}</span>
+      <span style="font-size: 1.4rem;">💰</span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary-dark); margin-top: 6px;">
+      {{ stats.total_inventory_value | currency }}
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-light); margin-top: 2px;">
+      In store stock
+    </div>
+  </div>
+
+  <!-- Expiring Soon (<= 30 Days) -->
+  <div class="card" style="margin-bottom: 0; padding: 16px; border-color: #fdba74;">
+    <div class="d-flex justify-between align-center">
+      <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-urgent);">{{ t('dash_nearing_expiry') }}</span>
+      <span style="font-size: 1.4rem;">⏳</span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--color-urgent); margin-top: 6px;">
+      {{ stats.nearing_expiry_count }}
+    </div>
+    <div style="margin-top: 4px;">
+      <a href="{{ url_for('inventory.index', filter='30days') }}" style="font-size: 0.78rem; font-weight: 700; color: var(--color-urgent); text-decoration: none;">
+        {{ t('dash_view_all') }} →
+      </a>
+    </div>
+  </div>
+
+  <!-- Expired Products -->
+  <div class="card" style="margin-bottom: 0; padding: 16px; border-color: #fca5a5;">
+    <div class="d-flex justify-between align-center">
+      <span style="font-size: 0.85rem; font-weight: 700; color: var(--color-expired);">{{ t('dash_expired') }}</span>
+      <span style="font-size: 1.4rem;">🛑</span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--color-expired); margin-top: 6px;">
+      {{ stats.expired_count }}
+    </div>
+    <div style="margin-top: 4px;">
+      <a href="{{ url_for('inventory.index', filter='expired') }}" style="font-size: 0.78rem; font-weight: 700; color: var(--color-expired); text-decoration: none;">
+        {{ t('dash_view_all') }} →
+      </a>
+    </div>
+  </div>
+
+  <!-- Today's Sales -->
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="d-flex justify-between align-center">
+      <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('dash_todays_sales') }}</span>
+      <span style="font-size: 1.4rem;">⚡</span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-top: 6px;">
+      {{ stats.units_sold_today }} <small style="font-size: 0.9rem; font-weight: 500;">sold</small>
+    </div>
+    <div style="font-size: 0.8rem; color: var(--color-safe); font-weight: 600; margin-top: 2px;">
+      {{ stats.revenue_today | currency }} revenue
+    </div>
+  </div>
+
+  <!-- Low Stock Products -->
+  <div class="card" style="margin-bottom: 0; padding: 16px;">
+    <div class="d-flex justify-between align-center">
+      <span class="text-muted" style="font-size: 0.85rem; font-weight: 600;">{{ t('dash_low_stock') }}</span>
+      <span style="font-size: 1.4rem;">⚠️</span>
+    </div>
+    <div style="font-size: 1.8rem; font-weight: 800; color: var(--text-main); margin-top: 6px;">
+      {{ stats.low_stock_count }}
+    </div>
+    <div style="margin-top: 4px;">
+      <a href="{{ url_for('inventory.index', filter='low_stock') }}" style="font-size: 0.78rem; font-weight: 700; color: var(--primary-hover); text-decoration: none;">
+        {{ t('dash_view_all') }} →
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Quick Navigation Action Tiles -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <span>🚀</span> {{ t('dash_quick_actions') }}
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+    <a href="{{ url_for('scanner.scan') }}" class="card" style="margin-bottom: 0; background: var(--bg-subtle); border-color: var(--primary-border); text-decoration: none; padding: 16px; display: flex; align-items: center; gap: 14px;">
+      <div class="brand-icon" style="background: var(--primary); font-size: 22px;">📷</div>
+      <div>
+        <div style="font-weight: 800; color: var(--primary-dark); font-size: 1.05rem;">{{ t('nav_scan') }}</div>
+        <small class="text-muted">Barcode & OCR Date Entry</small>
+      </div>
+    </a>
+
+    <a href="{{ url_for('sales.quick_sales') }}" class="card" style="margin-bottom: 0; background: var(--bg-subtle); border-color: var(--primary-border); text-decoration: none; padding: 16px; display: flex; align-items: center; gap: 14px;">
+      <div class="brand-icon" style="background: #10B981; font-size: 22px;">⚡</div>
+      <div>
+        <div style="font-weight: 800; color: var(--primary-dark); font-size: 1.05rem;">{{ t('nav_quick_sales') }}</div>
+        <small class="text-muted">Fast POS & Stock Deduction</small>
+      </div>
+    </a>
+
+    <a href="{{ url_for('recommendations.index') }}" class="card" style="margin-bottom: 0; background: var(--bg-subtle); border-color: var(--primary-border); text-decoration: none; padding: 16px; display: flex; align-items: center; gap: 14px;">
+      <div class="brand-icon" style="background: #8B5CF6; font-size: 22px;">🤖</div>
+      <div>
+        <div style="font-weight: 800; color: var(--primary-dark); font-size: 1.05rem;">{{ t('nav_recommendations') }}</div>
+        <small class="text-muted">Dynamic Discounts & ML</small>
+      </div>
+    </a>
+
+    <a href="{{ url_for('analytics.index') }}" class="card" style="margin-bottom: 0; background: var(--bg-subtle); border-color: var(--primary-border); text-decoration: none; padding: 16px; display: flex; align-items: center; gap: 14px;">
+      <div class="brand-icon" style="background: #F59E0B; font-size: 22px;">📈</div>
+      <div>
+        <div style="font-weight: 800; color: var(--primary-dark); font-size: 1.05rem;">{{ t('nav_analytics') }}</div>
+        <small class="text-muted">Sales Charts & Waste Reports</small>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ t('inv_title') }}</h1>
+    <p class="page-subtitle">{{ t('inv_subtitle') }} ({{ total_count }} {{ t('dash_total_products')|lower }})</p>
+  </div>
+  <div>
+    <a href="{{ url_for('scanner.scan') }}" class="btn btn-primary">
+      <span>➕</span> {{ t('nav_scan') }}
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="card" style="padding: 16px;">
+  <form method="GET" action="{{ url_for('inventory.index') }}" class="d-flex flex-column flex-md-row gap-2">
+    <div style="flex: 1; position: relative;">
+      <input type="text" name="q" class="form-input" 
+             placeholder="{{ t('inv_search_placeholder') }}" 
+             value="{{ search_query }}">
+    </div>
+    <input type="hidden" name="filter" value="{{ current_filter }}">
+    <button type="submit" class="btn btn-secondary">
+      🔍 Search
+    </button>
+    {% if search_query or current_filter != 'all' %}
+    <a href="{{ url_for('inventory.index') }}" class="btn btn-outline">
+      ✕ Clear
+    </a>
+    {% endif %}
+  </form>
+
+  <!-- Filter Pills -->
+  <div style="display: flex; gap: 8px; overflow-x: auto; padding-top: 14px; margin-top: 10px; border-top: 1px solid var(--border-subtle); white-space: nowrap;">
+    <a href="{{ url_for('inventory.index', filter='all', q=search_query) }}" 
+       class="badge {{ 'badge-pink' if current_filter == 'all' else 'btn-outline' }}" 
+       style="padding: 6px 14px; text-decoration: none; font-size: 0.85rem;">
+      {{ t('filter_all') }}
+    </a>
+    <a href="{{ url_for('inventory.index', filter='expired', q=search_query) }}" 
+       class="badge {{ 'badge-danger' if current_filter == 'expired' else 'btn-outline' }}" 
+       style="padding: 6px 14px; text-decoration: none; font-size: 0.85rem;">
+      🛑 {{ t('filter_expired') }}
+    </a>
+    <a href="{{ url_for('inventory.index', filter='7days', q=search_query) }}" 
+       class="badge {{ 'badge-orange' if current_filter == '7days' else 'btn-outline' }}" 
+       style="padding: 6px 14px; text-decoration: none; font-size: 0.85rem;">
+      ⏳ {{ t('filter_7days') }}
+    </a>
+    <a href="{{ url_for('inventory.index', filter='15days', q=search_query) }}" 
+       class="badge {{ 'badge-amber' if current_filter == '15days' else 'btn-outline' }}" 
+       style="padding: 6px 14px; text-decoration: none; font-size: 0.85rem;">
+      ⚠️ {{ t('filter_15days') }}
+    </a>
+    <a href="{{ url_for('inventory.index', filter='30days', q=search_query) }}" 
+       class="badge {{ 'badge-yellow' if current_filter == '30days' else 'btn-outline' }}" 
+       style="padding: 6px 14px; text-decoration: none; font-size: 0.85rem;">
+      📅 {{ t('filter_30days') }}
+    </a>
+    <a href="{{ url_for('inventory.index', filter='low_stock', q=search_query) }}" 
+       class="badge {{ 'badge-pink' if current_filter == 'low_stock' else 'btn-outline' }}" 
+       style="padding: 6px 14px; text-decoration: none; font-size: 0.85rem;">
+      📉 {{ t('filter_low_stock') }}
+    </a>
+  </div>
+</div>
+
+<!-- Product Cards (Mobile View) & Table (Desktop View) -->
+{% if products and products|length > 0 %}
+
+<!-- Desktop View Table -->
+<div class="card d-none d-md-block" style="padding: 0; overflow: hidden;">
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.92rem;">
+      <thead style="background-color: var(--bg-subtle); border-bottom: 2px solid var(--border-color); color: var(--primary-dark);">
+        <tr>
+          <th style="padding: 14px 16px;">{{ t('col_product') }}</th>
+          <th style="padding: 14px 16px;">{{ t('col_barcode') }}</th>
+          <th style="padding: 14px 16px;">{{ t('col_mfg') }}</th>
+          <th style="padding: 14px 16px;">{{ t('col_expiry') }}</th>
+          <th style="padding: 14px 16px;">{{ t('col_status') }}</th>
+          <th style="padding: 14px 16px;">{{ t('col_quantity') }}</th>
+          <th style="padding: 14px 16px;">{{ t('col_price') }}</th>
+          <th style="padding: 14px 16px; text-align: right;">{{ t('col_actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr style="border-bottom: 1px solid var(--border-color); transition: background 0.15s;" onmouseover="this.style.backgroundColor='#FFF5F7'" onmouseout="this.style.backgroundColor='#fff'">
+          <td style="padding: 14px 16px; font-weight: 700; color: var(--text-main);">
+            {{ p.product_name }}
+            {% if p.brand or p.package_size %}<small class="text-muted" style="display:block; font-weight:500;">{{ p.brand }}{% if p.package_size %} · {{ p.package_size }}{% endif %}</small>{% endif %}
+            {% if p.is_low_stock %}
+            <span class="badge badge-pink" style="font-size: 0.7rem; margin-left: 4px;">Low Stock</span>
+            {% endif %}
+          </td>
+          <td style="padding: 14px 16px; font-family: monospace; color: var(--text-muted);">{{ p.barcode }}</td>
+          <td style="padding: 14px 16px; color: var(--text-light);">{{ p.mfg_date }}</td>
+          <td style="padding: 14px 16px; font-weight: 600;">{{ p.expiry_date }}</td>
+          <td style="padding: 14px 16px;">
+            <span class="badge {{ p.badge_class }}">{{ p.status_text }}</span>
+          </td>
+          <td style="padding: 14px 16px; font-weight: 800; font-size: 1rem; white-space: nowrap;">
+            <div style="display: inline-flex; align-items: center; gap: 6px;">
+              <button type="button" class="btn btn-outline" 
+                      style="width: 28px; height: 28px; min-height: 28px; padding: 0; font-size: 1.15rem; font-weight: 900; line-height: 1; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #dc2626; border-color: #fca5a5;" 
+                      title="Decrease quantity by 1 (-)"
+                      onclick="decrementProduct({{ p.id }}, this)">
+                −
+              </button>
+              <span id="stock-qty-{{ p.id }}" style="min-width: 26px; text-align: center; display: inline-block;">{{ p.quantity }}</span>
+              <button type="button" class="btn btn-outline" 
+                      style="width: 28px; height: 28px; min-height: 28px; padding: 0; font-size: 1.15rem; font-weight: 900; line-height: 1; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: #16a34a; border-color: #86efac;" 
+                      title="Increase quantity by 1 (+)"
+                      onclick="incrementProduct({{ p.id }}, this)">
+                +
+              </button>
+            </div>
+          </td>
+          <td style="padding: 14px 16px; font-weight: 800; color: var(--primary-dark);">
+            {{ p.price | currency }}
+          </td>
+          <td style="padding: 14px 16px; text-align: right; white-space: nowrap;">
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.82rem; min-height: 32px; font-weight: 700; color: #dc2626; border-color: #fca5a5;"
+                    title="Quick decrease / sell 1 unit (-)"
+                    onclick="decrementProduct({{ p.id }}, this)">
+              − 1
+            </button>
+            <button class="btn btn-outline" style="padding: 4px 10px; font-size: 0.8rem; min-height: 32px; margin-left: 4px;"
+                    onclick="openEditModal({{ p|tojson }})">
+              ✏️ {{ t('btn_edit') }}
+            </button>
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem; min-height: 32px; margin-left: 4px;"
+                    onclick="confirmDeleteProduct({{ p.id }}, '{{ p.product_name }}')">
+              🗑️
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Mobile View Cards -->
+<div class="d-md-none" style="display: flex; flex-direction: column; gap: 12px;">
+  {% for p in products %}
+  <div class="card" style="margin-bottom: 0; padding: 16px; border-left: 5px solid {% if p.status == 'expired' %}var(--color-expired){% elif p.days_left <= 7 %}var(--color-critical){% elif p.days_left <= 15 %}var(--color-urgent){% else %}var(--color-safe){% endif %};">
+    <div class="d-flex justify-between align-center">
+      <div style="font-weight: 800; font-size: 1.05rem; color: var(--text-main);">
+        {{ p.product_name }}
+        {% if p.brand or p.package_size %}<small class="text-muted" style="display:block; font-weight:500;">{{ p.brand }}{% if p.package_size %} · {{ p.package_size }}{% endif %}</small>{% endif %}
+      </div>
+      <span class="badge {{ p.badge_class }}">{{ p.status_text }}</span>
+    </div>
+
+    <div style="font-family: monospace; font-size: 0.82rem; color: var(--text-light); margin-top: 4px;">
+      Barcode: {{ p.barcode }}
+    </div>
+
+    <div class="d-flex justify-between align-center mt-3" style="padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+      <div>
+        <small class="text-muted">Stock Qty</small>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+          <button type="button" class="btn btn-outline" 
+                  style="width: 34px; height: 34px; min-height: 34px; padding: 0; font-size: 1.25rem; font-weight: 900; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #dc2626; border-color: #fca5a5;" 
+                  title="Decrease quantity by 1 (-)"
+                  onclick="decrementProduct({{ p.id }}, this)">
+            −
+          </button>
+          <div style="font-weight: 800; font-size: 1.25rem; min-width: 28px; text-align: center;" id="mobile-stock-qty-{{ p.id }}">{{ p.quantity }}</div>
+          <button type="button" class="btn btn-outline" 
+                  style="width: 34px; height: 34px; min-height: 34px; padding: 0; font-size: 1.25rem; font-weight: 900; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: #16a34a; border-color: #86efac;" 
+                  title="Increase quantity by 1 (+)"
+                  onclick="incrementProduct({{ p.id }}, this)">
+            +
+          </button>
+        </div>
+      </div>
+      <div>
+        <small class="text-muted">Price</small>
+        <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary-dark);">{{ p.price | currency }}</div>
+      </div>
+      <div>
+        <small class="text-muted">Expiry</small>
+        <div style="font-weight: 600; font-size: 0.9rem;">{{ p.expiry_date }}</div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn btn-outline" style="padding: 8px 12px; font-size: 0.88rem; font-weight: 700; color: #dc2626; border-color: #fca5a5; display: flex; align-items: center; gap: 4px; justify-content: center;"
+              onclick="decrementProduct({{ p.id }}, this)"
+              title="Decrease quantity by 1 (-)">
+        − 1 Unit
+      </button>
+      <button class="btn btn-secondary" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;"
+              onclick="openEditModal({{ p|tojson }})">
+        ✏️ {{ t('btn_edit') }}
+      </button>
+      <button class="btn btn-danger" style="padding: 8px 14px; font-size: 0.85rem;"
+              onclick="confirmDeleteProduct({{ p.id }}, '{{ p.product_name }}')">
+        🗑️
+      </button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card text-center" style="padding: 40px 20px;">
+  <div style="font-size: 40px; margin-bottom: 12px;">🔍</div>
+  <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main);">{{ t('no_products_found') }}</h3>
+  <p class="text-muted mt-2">Try adjusting your search query or clear filters.</p>
+  <div class="mt-4">
+    <a href="{{ url_for('scanner.scan') }}" class="btn btn-primary">
+      <span>➕</span> {{ t('nav_scan') }}
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Edit Product Modal Dialog -->
+<div id="edit-product-modal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="d-flex justify-between align-center mb-3">
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark);">✏️ Edit Product</h3>
+      <button type="button" class="btn btn-outline" style="min-height: 32px; padding: 2px 8px;" onclick="closeEditModal()">✕</button>
+    </div>
+
+    <form id="edit-product-form">
+      <input type="hidden" id="edit-prod-id">
+
+      <div class="form-group">
+        <label class="form-label" for="edit-prod-name">{{ t('field_product_name') }}</label>
+        <input type="text" id="edit-prod-name" class="form-input" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="edit-prod-barcode">{{ t('field_barcode') }}</label>
+        <input type="text" id="edit-prod-barcode" class="form-input" required>
+      </div>
+
+      <div class="six-field-grid">
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-mfg">{{ t('field_mfg_date') }}</label>
+          <input type="date" id="edit-prod-mfg" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-exp">{{ t('field_expiry_date') }}</label>
+          <input type="date" id="edit-prod-exp" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-qty">{{ t('field_quantity') }}</label>
+          <input type="number" id="edit-prod-qty" class="form-input" min="0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit-prod-price">{{ t('field_price') }} (₹)</label>
+          <input type="number" id="edit-prod-price" class="form-input" min="0" step="0.5" required>
+        </div>
+      </div>
+
+      <div class="d-flex justify-between gap-2 mt-4">
+        <button type="button" class="btn btn-outline" onclick="closeEditModal()">{{ t('btn_cancel') }}</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-edit">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function openEditModal(prod) {
+  document.getElementById('edit-prod-id').value = prod.id;
+  document.getElementById('edit-prod-name').value = prod.product_name;
+  document.getElementById('edit-prod-barcode').value = prod.barcode;
+  document.getElementById('edit-prod-mfg').value = prod.mfg_date;
+  document.getElementById('edit-prod-exp').value = prod.expiry_date;
+  document.getElementById('edit-prod-qty').value = prod.quantity;
+  document.getElementById('edit-prod-price').value = prod.price;
+
+  document.getElementById('edit-product-modal').classList.add('active');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-product-modal').classList.remove('active');
+}
+
+document.getElementById('edit-product-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('edit-prod-id').value;
+  const payload = {
+    product_name: document.getElementById('edit-prod-name').value.trim(),
+    barcode: document.getElementById('edit-prod-barcode').value.trim(),
+    mfg_date: document.getElementById('edit-prod-mfg').value,
+    expiry_date: document.getElementById('edit-prod-exp').value,
+    quantity: parseInt(document.getElementById('edit-prod-qty').value, 10),
+    price: parseFloat(document.getElementById('edit-prod-price').value)
+  };
+
+  const btn = document.getElementById('btn-save-edit');
+  btn.disabled = true;
+  btn.textContent = "Updating...";
+
+  try {
+    const res = await fetch(`/api/product/update/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(data.message);
+      window.location.reload();
+    } else {
+      alert(data.message || "Failed to update product.");
+    }
+  } catch (err) {
+    alert("Connection error.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Save Changes";
+  }
+});
+
+async function confirmDeleteProduct(id, name) {
+  if (confirm(`Are you sure you want to delete '${name}' from inventory?`)) {
+    try {
+      const res = await fetch(`/api/product/delete/${id}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || "Delete failed.");
+      }
+    } catch (err) {
+      alert("Error contacting server.");
+    }
+  }
+}
+
+function showInventoryToast(msg, isError = false) {
+  let toast = document.getElementById('inv-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'inv-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 75px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.style.background = isError ? '#ef4444' : '#10b981';
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateX(-50%) translateY(0)';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(10px)';
+  }, 2200);
+}
+
+async function decrementProduct(id, btnElem) {
+  if (btnElem) btnElem.disabled = true;
+  try {
+    const res = await fetch(`/api/product/decrement/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const dQty = document.getElementById(`stock-qty-${id}`);
+      const mQty = document.getElementById(`mobile-stock-qty-${id}`);
+      if (dQty) {
+        dQty.textContent = data.new_quantity;
+        dQty.style.color = data.new_quantity < 5 ? '#ec4899' : '';
+      }
+      if (mQty) {
+        mQty.textContent = data.new_quantity;
+        mQty.style.color = data.new_quantity < 5 ? '#ec4899' : '';
+      }
+      showInventoryToast(`−1 Stock: ${data.new_quantity} remaining`);
+    } else {
+      showInventoryToast(data.message || 'Error decreasing quantity', true);
+    }
+  } catch (err) {
+    showInventoryToast('Connection error', true);
+  } finally {
+    if (btnElem) btnElem.disabled = false;
+  }
+}
+
+async function incrementProduct(id, btnElem) {
+  if (btnElem) btnElem.disabled = true;
+  try {
+    const res = await fetch(`/api/product/increment/${id}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const dQty = document.getElementById(`stock-qty-${id}`);
+      const mQty = document.getElementById(`mobile-stock-qty-${id}`);
+      if (dQty) {
+        dQty.textContent = data.new_quantity;
+        dQty.style.color = data.new_quantity < 5 ? '#ec4899' : '';
+      }
+      if (mQty) {
+        mQty.textContent = data.new_quantity;
+        mQty.style.color = data.new_quantity < 5 ? '#ec4899' : '';
+      }
+      showInventoryToast(`+1 Stock: ${data.new_quantity} total`);
+    } else {
+      showInventoryToast(data.message || 'Error increasing quantity', true);
+    }
+  } catch (err) {
+    showInventoryToast('Connection error', true);
+  } finally {
+    if (btnElem) btnElem.disabled = false;
+  }
+}
+</script>
+{% endblock %}

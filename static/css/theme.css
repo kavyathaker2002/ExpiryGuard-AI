@@ -1,0 +1,93 @@
+/* ============================================================
+   EXPIRYGUARD AI — SOFT / LIGHT PINK DESIGN SYSTEM
+   Mobile-First, High Contrast, Accessible for Indian Kirana Stores
+   ============================================================ */
+
+:root {
+  /* Soft / Light Pink Color Palette */
+  --pink-50:  #FFF5F7;
+  --pink-100: #FFE4E8;
+  --pink-200: #FECDD6;
+  --pink-300: #FDA4AF;
+  --pink-400: #FB7185;
+  --pink-500: #F43F5E;
+  --pink-600: #E11D48;
+  --pink-700: #BE123C;
+  --pink-800: #9F1239;
+  
+  /* Brand Specific Shades */
+  --primary:        #EC4899;        /* Warm Rose Pink */
+  --primary-hover:  #DB2777;        /* Deep Rose */
+  --primary-light:  #FDF2F8;        /* Soft Tint */
+  --primary-border: #FBCFE8;        /* Soft Border */
+  --primary-dark:   #9D174D;        /* Deepest Contrast Pink */
+  
+  /* Backgrounds & Surfaces */
+  --bg-page:        #FFF5F7;        /* Soft Pink Toned Clean Canvas */
+  --bg-surface:     #FFFFFF;        /* Pure White Card */
+  --bg-subtle:      #FFF0F3;        /* Soft Pink Wash */
+  --border-color:   #FCE7F3;        /* Light Rose Divider */
+  --border-subtle:  #FFE4E8;
+  
+  /* Typography & High-Contrast Text */
+  --text-main:      #111827;        /* Dark Slate - Maximum Sunlight Readability */
+  --text-muted:     #4B5563;        /* Secondary Slate */
+  --text-light:     #6B7280;        /* Tertiary Gray */
+  --text-on-pink:   #FFFFFF;        /* Crisp White on Pink buttons */
+  
+  /* Status Colors */
+  --color-expired:  #DC2626;        /* Expired Red */
+  --bg-expired:     #FEE2E2;
+  --color-critical: #EA580C;        /* Critical Orange (<=7 days) */
+  --bg-critical:    #FFEDD5;
+  --color-urgent:   #D97706;        /* Urgent Amber (<=15 days) */
+  --bg-urgent:      #FEF3C7;
+  --color-warning:  #B45309;        /* Warning Yellow (<=30 days) */
+  --bg-warning:     #FEF9C3;
+  --color-safe:     #059669;        /* Safe Green */
+  --bg-safe:        #D1FAE5;
+  
+  /* Elevation Shadows with Soft Pink Aura */
+  --shadow-sm:  0 1px 2px 0 rgba(236, 72, 153, 0.05);
+  --shadow-md:  0 4px 12px -1px rgba(236, 72, 153, 0.12), 0 2px 4px -2px rgba(236, 72, 153, 0.06);
+  --shadow-lg:  0 10px 25px -3px rgba(236, 72, 153, 0.18), 0 4px 6px -4px rgba(236, 72, 153, 0.08);
+  --shadow-pink-glow: 0 0 15px rgba(244, 114, 182, 0.4);
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  
+  /* Layout Spacing */
+  --header-height: 64px;
+  --bottom-nav-height: 68px;
+  
+  /* Fonts */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  padding-bottom: calc(var(--bottom-nav-height) + 16px);
+}
+
+@media (min-width: 992px) {
+  body {
+    padding-bottom: 32px;
+  }
+}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{{ t('app_name') }} — {{ t('app_tagline') }}</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/scanner.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/chatbot.css') }}">
+  
+  <!-- Third-party Libraries (ZXing Barcode, Html5-QRCode, Tesseract OCR, Chart.js) -->
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Client i18n -->
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+</head>
+<body>
+
+  <!-- Top App Navigation Bar -->
+  <header class="navbar">
+    <div class="container navbar-inner">
+      <div class="d-flex align-center">
+        <a href="{{ url_for('dashboard.index') if is_logged_in else url_for('auth.login') }}" class="brand-link">
+          <div class="brand-icon">🛡️</div>
+          <div class="brand-title">
+            <span>{{ t('app_name') }}</span>
+            <span class="brand-subtitle">{{ shop_name if is_logged_in else t('app_tagline') }}</span>
+          </div>
+        </a>
+
+        {% if is_logged_in %}
+        <nav class="desktop-nav">
+          <a href="{{ url_for('dashboard.index') }}" class="desktop-nav-link {{ 'active' if request.endpoint == 'dashboard.index' else '' }}">
+            <span>📊</span> {{ t('nav_dashboard') }}
+          </a>
+          <a href="{{ url_for('scanner.scan') }}" class="desktop-nav-link {{ 'active' if request.endpoint == 'scanner.scan' else '' }}">
+            <span>📷</span> {{ t('nav_scan') }}
+          </a>
+          <a href="{{ url_for('inventory.index') }}" class="desktop-nav-link {{ 'active' if request.endpoint == 'inventory.index' else '' }}">
+            <span>📦</span> {{ t('nav_inventory') }}
+          </a>
+          <a href="{{ url_for('sales.quick_sales') }}" class="desktop-nav-link {{ 'active' if request.endpoint == 'sales.quick_sales' else '' }}">
+            <span>⚡</span> {{ t('nav_quick_sales') }}
+          </a>
+          <a href="{{ url_for('recommendations.index') }}" class="desktop-nav-link {{ 'active' if request.endpoint == 'recommendations.index' else '' }}">
+            <span>🤖</span> {{ t('nav_recommendations') }}
+          </a>
+          <a href="{{ url_for('analytics.index') }}" class="desktop-nav-link {{ 'active' if request.endpoint == 'analytics.index' else '' }}">
+            <span>📈</span> {{ t('nav_analytics') }}
+          </a>
+        </nav>
+        {% endif %}
+      </div>
+
+      <div class="nav-actions">
+        <!-- Multilingual Language Selector Dropdown -->
+        <div class="lang-selector-wrap">
+          <select id="global-lang-select" class="lang-select" aria-label="Select Interface Language">
+            <option value="en" {{ 'selected' if current_lang == 'en' else '' }}>English</option>
+            <option value="hi" {{ 'selected' if current_lang == 'hi' else '' }}>हिन्दी (Hindi)</option>
+            <option value="mr" {{ 'selected' if current_lang == 'mr' else '' }}>मराठी (Marathi)</option>
+          </select>
+        </div>
+
+        {% if is_logged_in %}
+        <button type="button" class="btn btn-secondary" style="padding: 6px 12px; min-height: 36px; font-size: 0.82rem;" onclick="openPhoneQrModal()" title="Scan QR to open on Phone">
+          <span>📱</span> <span class="d-none d-sm-inline">Phone QR</span>
+        </button>
+        <a href="{{ url_for('auth.profile') }}" class="shop-pill" title="Shop Settings">
+          <span>🏪</span>
+          <span class="d-none d-md-inline">{{ shop_name }}</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline" style="padding: 6px 12px; min-height: 36px; font-size: 0.85rem;" title="Logout">
+          <span>🚪</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary" style="padding: 6px 14px; min-height: 36px; font-size: 0.88rem;">
+          {{ t('nav_login') }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Messages & Toasts -->
+  <div class="container alert-container" id="toast-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Block -->
+  <main class="container" style="flex: 1;">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if is_logged_in %}
+  <!-- Mobile Friendly Bottom Navigation Bar (Thumb Accessible) -->
+  <nav class="bottom-nav">
+    <a href="{{ url_for('dashboard.index') }}" class="bottom-nav-item {{ 'active' if request.endpoint == 'dashboard.index' else '' }}">
+      <span class="bottom-nav-icon">📊</span>
+      <span>{{ t('nav_dashboard') }}</span>
+    </a>
+    <a href="{{ url_for('inventory.index') }}" class="bottom-nav-item {{ 'active' if request.endpoint == 'inventory.index' else '' }}">
+      <span class="bottom-nav-icon">📦</span>
+      <span>{{ t('nav_inventory') }}</span>
+    </a>
+    <a href="{{ url_for('scanner.scan') }}" class="bottom-nav-item highlight-scan" title="Scan Product">
+      <div class="scan-floating-btn">📷</div>
+      <span>{{ t('nav_scan') }}</span>
+    </a>
+    <a href="{{ url_for('sales.quick_sales') }}" class="bottom-nav-item {{ 'active' if request.endpoint == 'sales.quick_sales' else '' }}">
+      <span class="bottom-nav-icon">⚡</span>
+      <span>{{ t('nav_quick_sales') }}</span>
+    </a>
+    <a href="{{ url_for('recommendations.index') }}" class="bottom-nav-item {{ 'active' if request.endpoint == 'recommendations.index' else '' }}">
+      <span class="bottom-nav-icon">🤖</span>
+      <span>{{ t('nav_recommendations') }}</span>
+    </a>
+    <a href="{{ url_for('analytics.index') }}" class="bottom-nav-item {{ 'active' if request.endpoint == 'analytics.index' else '' }}">
+      <span class="bottom-nav-icon">📈</span>
+      <span>{{ t('nav_analytics') }}</span>
+    </a>
+  </nav>
+  {% endif %}
+
+  {% if is_logged_in %}
+  <!-- Multilingual Accessible AI Store Assistant Chatbot -->
+  <button type="button" id="chatbot-launcher-btn" class="chatbot-launcher-btn" title="Chat with AI Store Assistant" aria-label="Open AI Store Assistant">
+    <span>💬</span>
+    <span class="chatbot-pulse-badge"></span>
+  </button>
+
+  <div id="chatbot-window" class="chatbot-window" role="dialog" aria-label="AI Store Assistant Window">
+    <div class="chatbot-header">
+      <div class="chatbot-header-title">
+        <div class="chatbot-avatar">🤖</div>
+        <div class="chatbot-header-text">
+          <span class="chatbot-name">{{ shop_name }} AI</span>
+          <span class="chatbot-status">Online Assistant</span>
+        </div>
+      </div>
+      <div class="d-flex align-center gap-2">
+        <button type="button" id="chatbot-audio-toggle" class="chatbot-tts-btn" title="Voice Speech (On/Off)" aria-label="Toggle Voice Speech">🔊</button>
+        <button type="button" id="chatbot-close-btn" class="chatbot-close-btn" title="Close" aria-label="Close Chat">✕</button>
+      </div>
+    </div>
+
+    <!-- Quick Prompt Suggestion Chips -->
+    <div class="chatbot-chips">
+      <button type="button" class="chatbot-chip" onclick="sendChatbotQuery('Which products are expiring soon?', true)">⏳ Expiring Soon</button>
+      <button type="button" class="chatbot-chip" onclick="sendChatbotQuery('What is expired?', true)">🛑 Expired Items</button>
+      <button type="button" class="chatbot-chip" onclick="sendChatbotQuery('Show low stock products', true)">📦 Low Stock</button>
+      <button type="button" class="chatbot-chip" onclick="sendChatbotQuery('Today sales and revenue', true)">💰 Today's Sales</button>
+      <button type="button" class="chatbot-chip" onclick="sendChatbotQuery('Suggest discounts to reduce waste', true)">🏷️ Discounts</button>
+      <button type="button" class="chatbot-chip" onclick="sendChatbotQuery('How do I scan a product?', true)">📸 How to Scan</button>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="chatbot-messages" class="chatbot-messages"></div>
+
+    <!-- User Input Bar -->
+    <div class="chatbot-input-bar">
+      <input type="text" id="chatbot-user-input" class="chatbot-input" 
+             placeholder="Ask in English, हिन्दी, or मराठी..." aria-label="Message to assistant">
+      <button type="button" id="chatbot-send-btn" class="chatbot-send-btn" title="Send message" aria-label="Send">➔</button>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+
+  <!-- Connect Phone via QR Code Modal -->
+  <div id="modal-phone-qr" class="modal-overlay">
+    <div class="modal-content" style="max-width: 420px; text-align: center; padding: 24px;">
+      <div class="d-flex justify-between align-center mb-3">
+        <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-dark);">📱 Open on Your Phone</h3>
+        <button type="button" class="btn btn-outline" style="min-height: 32px; padding: 2px 8px;" onclick="closePhoneQrModal()">✕</button>
+      </div>
+
+      <p class="text-muted" style="font-size: 0.88rem; margin-bottom: 16px;">
+        Point your phone camera at this QR code to open <strong>ExpiryGuard AI</strong> instantly on your phone! No IP address typing needed.
+      </p>
+
+      <div style="background: #fff5f7; border: 2px solid var(--primary-border); border-radius: 16px; padding: 16px; display: inline-block; margin-bottom: 14px; box-shadow: var(--shadow-md);">
+        <img src="/api/phone-connect/qr-code" alt="Phone Scan QR Code" style="width: 220px; height: 220px; display: block; border-radius: 8px;">
+      </div>
+
+      <div style="font-size: 0.82rem; color: var(--text-light); margin-bottom: 16px;">
+        Make sure your phone is connected to the same Wi-Fi network.
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+        <a href="{{ url_for('connect.download_apk') }}" class="btn btn-secondary btn-block" style="padding: 10px; font-weight: 700; text-decoration: none;">
+          📲 Download Android App (.apk)
+        </a>
+      </div>
+
+      <button type="button" class="btn btn-outline btn-block" onclick="closePhoneQrModal()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    function openPhoneQrModal() {
+      document.getElementById('modal-phone-qr').classList.add('active');
+    }
+    function closePhoneQrModal() {
+      document.getElementById('modal-phone-qr').classList.remove('active');
+    }
+  </script>
+  {% endif %}
+
+  {% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

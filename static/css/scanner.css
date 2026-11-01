@@ -1,0 +1,278 @@
+/* ============================================================
+   EXPIRYGUARD AI — SCANNER & QUICK SALES SPECIFIC STYLES
+   ============================================================ */
+
+/* Scanner Viewport */
+.scanner-container {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto 20px auto;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: #0f172a;
+  box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.25);
+  border: 2px solid var(--primary-border);
+}
+
+.scanner-video-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  overflow: hidden;
+}
+
+#scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Viewfinder Laser Animation */
+.scanner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.scanner-guide-box {
+  width: 75%;
+  height: 60%;
+  border: 2px dashed rgba(244, 114, 182, 0.7);
+  border-radius: var(--radius-md);
+  position: relative;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+}
+
+.scanner-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: #f43f5e;
+  border-style: solid;
+}
+
+.corner-tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-top-left-radius: 8px; }
+.corner-tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; border-top-right-radius: 8px; }
+.corner-bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; border-bottom-left-radius: 8px; }
+.corner-br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-bottom-right-radius: 8px; }
+
+.scanner-laser {
+  position: absolute;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ec4899, #f43f5e, #ec4899, transparent);
+  box-shadow: 0 0 10px #f43f5e;
+  top: 0;
+  animation: scanLaser 2s infinite ease-in-out;
+}
+
+@keyframes scanLaser {
+  0% { top: 5%; opacity: 0.8; }
+  50% { top: 95%; opacity: 1; }
+  100% { top: 5%; opacity: 0.8; }
+}
+
+.scanner-status-pill {
+  position: absolute;
+  bottom: 12px;
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid rgba(244, 114, 182, 0.4);
+}
+
+/* Scanner Action Controls */
+.scanner-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 12px;
+  background: #fff;
+  border-top: 1px solid var(--border-color);
+}
+
+/* OCR Feedback Box */
+.ocr-feedback-box {
+  background: var(--bg-subtle);
+  border: 1.5px dashed var(--primary-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ocr-result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  border: 1px solid var(--border-subtle);
+}
+
+/* Exact 6-Field Form Grid */
+.six-field-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+/* Scanner workspace */
+.scanner-page-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, .9fr) minmax(360px, 1.4fr) minmax(240px, .8fr);
+  align-items: start;
+  gap: 18px;
+  width: 100%;
+}
+.scan-tools-column, .product-form-column, .phone-qr-side-col { min-width: 0; display: grid; gap: 16px; }
+.product-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.product-form-grid .form-group { min-width: 0; }
+.scanner-action-grid, .barcode-action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.barcode-action-grid .upload-action { grid-column: 1 / -1; }
+.upload-action { display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
+.scanner-message { min-height: 1.4em; margin: 8px 0; color: var(--text-muted); font-size: .86rem; overflow-wrap: anywhere; }
+.scanner-error { color: #b91c1c; }
+.scan-uncertain { border-color: #d97706 !important; background-color: #fffbeb !important; box-shadow: 0 0 0 2px rgba(217,119,6,.14); }
+.camera-toolbar { display: flex; align-items: center; gap: 10px; padding: 10px; background: #fff; }
+.camera-toolbar label { white-space: nowrap; font-weight: 700; }
+.camera-toolbar select { min-width: 0; }
+.image-preview-card { margin-top: 16px; padding: 12px; border: 1px solid var(--primary-border); border-radius: var(--radius-md); }
+.image-preview-wrap { position: relative; width: 100%; max-height: 320px; overflow: hidden; background: #111827; border-radius: var(--radius-sm); }
+.image-preview-wrap img { display: block; width: 100%; max-height: 320px; object-fit: contain; }
+.ocr-progress-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 12px; align-items: center; justify-content: center; padding: 16px; color: #fff; background: rgba(17,24,39,.78); text-align: center; }
+.scanner-spinner { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: scanner-spin .8s linear infinite; }
+@keyframes scanner-spin { to { transform: rotate(360deg); } }
+.extracted-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+.extracted-field { padding: 8px; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: #fff; overflow-wrap: anywhere; }
+.extracted-field.uncertain { border-color: #f59e0b; background: #fffbeb; }
+.phone-connect-card { position: sticky; top: 84px; }
+.phone-connect-card h2 { font-size: 1.15rem; color: var(--primary-dark); }
+.phone-connect-icon { font-size: 30px; }
+.phone-qr-frame { display: inline-block; margin: 8px auto 12px; padding: 10px; background: #fff; border: 1px solid var(--primary-border); border-radius: 14px; }
+.phone-qr-frame img { display: block; width: min(190px, 55vw); height: auto; aspect-ratio: 1; }
+.phone-direct-link { overflow-wrap: anywhere; font-size: .82rem; margin-bottom: 10px; }
+.scanner-help { margin: 0; font-size: .82rem; line-height: 1.5; text-align: left; color: var(--text-muted); }
+.sample-preset-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.scanner-container { width: 100%; max-width: none; }
+.scanner-controls { flex-wrap: wrap; }
+.scanner-controls .btn { flex: 1 1 130px; }
+@media (max-width: 1180px) {
+  .scanner-page-grid { grid-template-columns: minmax(250px, .9fr) minmax(350px, 1.2fr); }
+  .phone-qr-side-col { grid-column: 1 / -1; }
+  .phone-connect-card { position: static; display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 12px; text-align: left; }
+  .phone-connect-card > :not(.phone-connect-icon) { grid-column: 2; }
+  .phone-qr-frame { grid-column: 1; grid-row: 2 / span 4; }
+}
+@media (max-width: 760px) {
+  .scanner-page-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .phone-qr-side-col { grid-column: auto; }
+  .phone-connect-card { display: block; text-align: center; }
+  .phone-connect-card > :not(.phone-connect-icon) { grid-column: auto; }
+  .phone-qr-frame { margin: 8px auto 12px; }
+  .product-form-grid { grid-template-columns: minmax(0,1fr); }
+  .scanner-action-grid { grid-template-columns: 1fr; }
+  .scanner-page-grid .card { padding: 14px; }
+  .scanner-controls { padding: 8px; }
+  .scanner-video-wrap { aspect-ratio: 3 / 4; }
+}
+
+@media (min-width: 768px) {
+  .six-field-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .grid-full-width {
+    grid-column: span 2;
+  }
+}
+
+/* Quick Sales Stepper */
+.sales-keypad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 18px 0;
+}
+
+.stepper-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-border);
+  background: var(--bg-subtle);
+  color: var(--primary-dark);
+  font-size: 26px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.stepper-btn:active {
+  background: var(--primary);
+  color: #fff;
+  transform: scale(0.92);
+}
+
+.stepper-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Sales Bill Preview Card */
+.bill-preview {
+  background: linear-gradient(135deg, #fff5f7, #fdf2f8);
+  border: 1.5px solid var(--primary-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.bill-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.bill-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 14px;
+  margin-top: 8px;
+  border-top: 2px dashed var(--primary-border);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary-dark);
+}

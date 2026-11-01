@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ t('ai_title') }}</h1>
+    <p class="page-subtitle">{{ t('ai_subtitle') }}</p>
+  </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; overflow-x: auto; white-space: nowrap;">
+  <button type="button" class="btn btn-primary" id="tab-btn-risk" onclick="switchAITab('risk')">
+    ⚠️ {{ t('ai_tab_risk') }}
+  </button>
+  <button type="button" class="btn btn-outline" id="tab-btn-pricing" onclick="switchAITab('pricing')">
+    🏷️ {{ t('ai_tab_pricing') }} ({{ pricing_cards|length }})
+  </button>
+  <button type="button" class="btn btn-outline" id="tab-btn-restock" onclick="switchAITab('restock')">
+    📋 {{ t('ai_tab_restock') }}
+  </button>
+</div>
+
+<!-- TAB 1: AI EXPIRY RISK PREDICTIONS -->
+<div id="ai-tab-content-risk">
+  <div class="card" style="background: linear-gradient(to right, #fff, var(--bg-subtle));">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🤖</span> Machine Learning Expiry Risk Model
+      </div>
+    </div>
+    <p class="text-muted" style="font-size: 0.92rem;">
+      Trained on FMCG grocery velocity, remaining shelf life, and current batch sizes to identify stock items that will expire before being sold.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+    {% for item in ai_risk_cards %}
+    {% set p = item.product %}
+    {% set r = item.risk %}
+    <div class="card" style="margin-bottom: 0; border-left: 5px solid {% if r.risk_level == 'expired' %}var(--color-expired){% elif r.risk_level == 'high' %}var(--color-critical){% elif r.risk_level == 'medium' %}var(--color-urgent){% else %}var(--color-safe){% endif %};">
+      <div class="d-flex justify-between align-center">
+        <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main);">{{ p.product_name }}</h4>
+        {% if r.risk_level == 'expired' %}
+        <span class="badge badge-danger">{{ t('status_expired') }}</span>
+        {% elif r.risk_level == 'high' %}
+        <span class="badge badge-danger">{{ t('ai_risk_high') }}</span>
+        {% elif r.risk_level == 'medium' %}
+        <span class="badge badge-amber">{{ t('ai_risk_medium') }}</span>
+        {% else %}
+        <span class="badge badge-success">{{ t('ai_risk_low') }}</span>
+        {% endif %}
+      </div>
+
+      <div class="d-flex justify-between mt-3" style="font-size: 0.88rem; background: var(--bg-subtle); padding: 10px; border-radius: var(--radius-sm);">
+        <div>
+          <span class="text-muted">Stock Qty:</span>
+          <strong>{{ p.quantity }}</strong>
+        </div>
+        <div>
+          <span class="text-muted">Days Left:</span>
+          <strong>{{ r.days_left }}d</strong>
+        </div>
+        <div>
+          <span class="text-muted">Est. Sellout:</span>
+          <strong>{{ r.days_to_sellout }}d</strong>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <div class="d-flex justify-between" style="font-size: 0.82rem; margin-bottom: 4px;">
+          <span class="text-muted">Waste Risk Probability:</span>
+          <strong>{{ r.waste_probability }}%</strong>
+        </div>
+        <div style="width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+          <div style="width: {{ r.waste_probability }}%; height: 100%; background: {% if r.waste_probability > 70 %}#ef4444{% elif r.waste_probability > 40 %}#f59e0b{% else %}#10b981{% endif %};"></div>
+        </div>
+      </div>
+
+      <div class="mt-3" style="font-size: 0.84rem; color: var(--text-muted); line-height: 1.4;">
+        💡 {{ t(r.reason_key, days=r.days_left, qty=p.quantity) }}
+      </div>
+
+      {% if r.risk_level in ['high', 'expired'] and p.quantity > 0 %}
+      <div class="mt-3 pt-2" style="border-top: 1px solid var(--border-subtle);">
+        <a href="{{ url_for('sales.quick_sales') }}" class="btn btn-secondary btn-block" style="font-size: 0.85rem; padding: 6px 10px; min-height: 34px;">
+          Sell Immediately at Counter →
+        </a>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- TAB 2: DYNAMIC PRICING SUGGESTIONS -->
+<div id="ai-tab-content-pricing" style="display: none;">
+  <div class="card" style="background: linear-gradient(to right, #fff, var(--bg-subtle));">
+    <div class="card-header">
+      <div class="card-title">
+        <span>🏷️</span> Smart Clearance Discounts
+      </div>
+    </div>
+    <p class="text-muted" style="font-size: 0.92rem;">
+      Discounts are scientifically suggested based on remaining shelf life to help you recover wholesale capital before expiry. 
+      <strong>Prices are NEVER modified without your explicit confirmation.</strong>
+    </p>
+  </div>
+
+  {% if pricing_cards and pricing_cards|length > 0 %}
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+    {% for item in pricing_cards %}
+    {% set p = item.product %}
+    {% set pr = item.pricing %}
+    <div class="card" style="margin-bottom: 0; border: 1.5px solid var(--primary-border);">
+      <div class="d-flex justify-between align-center">
+        <h4 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">{{ p.product_name }}</h4>
+        <span class="badge badge-pink" style="font-size: 0.88rem; font-weight: 800;">
+          {{ pr.discount_percent }}% OFF
+        </span>
+      </div>
+
+      <div class="d-flex justify-between align-center mt-3" style="background: var(--bg-subtle); padding: 12px; border-radius: var(--radius-md);">
+        <div>
+          <small class="text-muted">Current Price</small>
+          <div style="font-size: 1.1rem; font-weight: 700; text-decoration: line-through; color: var(--text-light);">
+            {{ pr.current_price | currency }}
+          </div>
+        </div>
+        <div style="font-size: 20px;">➔</div>
+        <div>
+          <small style="color: var(--primary-dark); font-weight: 700;">{{ t('ai_suggested_price') }}</small>
+          <div style="font-size: 1.4rem; font-weight: 800; color: var(--primary-dark);">
+            {{ pr.suggested_price | currency }}
+          </div>
+        </div>
+      </div>
+
+      <p class="mt-3 text-muted" style="font-size: 0.85rem; line-height: 1.4;">
+        {% if current_lang == 'hi' %}
+          {{ pr.reason_hi }}
+        {% elif current_lang == 'mr' %}
+          {{ pr.reason_mr }}
+        {% else %}
+          {{ pr.reason_en }}
+        {% endif %}
+      </p>
+
+      <div class="mt-4">
+        <button type="button" class="btn btn-primary btn-block"
+                onclick="applySuggestedDiscount({{ p.id }}, '{{ p.product_name }}', {{ pr.current_price }}, {{ pr.suggested_price }})">
+          ✓ {{ t('ai_btn_apply_discount') }} ({{ pr.suggested_price | currency }})
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card text-center" style="padding: 30px;">
+    <div style="font-size: 32px; margin-bottom: 8px;">🎉</div>
+    <h4>No discounts needed right now!</h4>
+    <p class="text-muted mt-2">All products in stock are moving at healthy speeds with safe expiry dates.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- TAB 3: RESTOCK & WASTE REDUCTION ALERTS -->
+<div id="ai-tab-content-restock" style="display: none;">
+  <!-- Front counter placement -->
+  {% if restock_advice.front_counter and restock_advice.front_counter|length > 0 %}
+  <div class="card" style="border-left: 5px solid var(--color-critical);">
+    <div class="card-title" style="color: var(--color-critical); margin-bottom: 12px;">
+      <span>🚨</span> Prioritize Front-Counter Display (Immediate Liquidation)
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      {% for item in restock_advice.front_counter %}
+      <div style="background: var(--bg-subtle); padding: 12px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong>{{ item.product_name }}</strong> ({{ item.quantity }} units left)
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+            {% if current_lang == 'hi' %}{{ item.advice_hi }}{% elif current_lang == 'mr' %}{{ item.advice_mr }}{% else %}{{ item.advice_en }}{% endif %}
+          </div>
+        </div>
+        <span class="badge badge-orange">{{ item.days_left }}d left</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Halt Orders -->
+  {% if restock_advice.halt_orders and restock_advice.halt_orders|length > 0 %}
+  <div class="card" style="border-left: 5px solid var(--color-urgent);">
+    <div class="card-title" style="color: var(--color-urgent); margin-bottom: 12px;">
+      <span>🛑</span> {{ t('ai_restock_stop') }}
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      {% for item in restock_advice.halt_orders %}
+      <div style="background: var(--bg-subtle); padding: 12px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong>{{ item.product_name }}</strong> ({{ item.quantity }} units in stock)
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+            {% if current_lang == 'hi' %}{{ item.advice_hi }}{% elif current_lang == 'mr' %}{{ item.advice_mr }}{% else %}{{ item.advice_en }}{% endif %}
+          </div>
+        </div>
+        <span class="badge badge-amber">{{ item.days_left }}d left</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Urgent Reorders -->
+  {% if restock_advice.reorder_needed and restock_advice.reorder_needed|length > 0 %}
+  <div class="card" style="border-left: 5px solid var(--color-safe);">
+    <div class="card-title" style="color: var(--color-safe); margin-bottom: 12px;">
+      <span>📦</span> {{ t('ai_restock_urgent') }}
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      {% for item in restock_advice.reorder_needed %}
+      <div style="background: var(--bg-subtle); padding: 12px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong>{{ item.product_name }}</strong>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+            {% if current_lang == 'hi' %}{{ item.advice_hi }}{% elif current_lang == 'mr' %}{{ item.advice_mr }}{% else %}{{ item.advice_en }}{% endif %}
+          </div>
+        </div>
+        <span class="badge badge-danger">Only {{ item.quantity }} units left!</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchAITab(tab) {
+  const tabs = ['risk', 'pricing', 'restock'];
+  tabs.forEach(t => {
+    document.getElementById(`ai-tab-content-${t}`).style.display = (t === tab) ? 'block' : 'none';
+    const btn = document.getElementById(`tab-btn-${t}`);
+    if (t === tab) {
+      btn.className = "btn btn-primary";
+    } else {
+      btn.className = "btn btn-outline";
+    }
+  });
+}
+
+async function applySuggestedDiscount(productId, productName, oldPrice, newPrice) {
+  if (confirm(`Confirm changing price for '${productName}' from ₹${oldPrice} to ₹${newPrice}?`)) {
+    try {
+      const res = await fetch('/api/pricing/apply-discount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: productId, new_price: newPrice })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        window.location.reload();
+      } else {
+        alert(data.message || "Failed to apply discount.");
+      }
+    } catch (err) {
+      alert("Error contacting server.");
+    }
+  }
+}
+</script>
+{% endblock %}

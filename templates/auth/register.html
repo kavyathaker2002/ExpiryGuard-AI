@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 30px auto 20px auto;">
+  <div class="card" style="box-shadow: var(--shadow-lg); border-color: var(--primary-border);">
+    <div class="text-center mb-4">
+      <div class="brand-icon" style="width: 54px; height: 54px; font-size: 28px; margin: 0 auto 12px auto;">🏪</div>
+      <h1 class="page-title" style="font-size: 1.5rem;">{{ t('register_title') }}</h1>
+      <p class="page-subtitle" style="font-size: 0.9rem;">{{ t('register_subtitle') }}</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+      <div class="form-group">
+        <label class="form-label" for="shop_name">{{ t('shop_name') }} *</label>
+        <input type="text" id="shop_name" name="shop_name" class="form-input" 
+               placeholder="{{ t('shop_name_placeholder') }}" 
+               value="{{ shop_name or '' }}" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="username">{{ t('username') }} *</label>
+        <input type="text" id="username" name="username" class="form-input" 
+               placeholder="{{ t('username_placeholder') }}" 
+               value="{{ username or '' }}" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">{{ t('password') }} *</label>
+        <input type="password" id="password" name="password" class="form-input" 
+               placeholder="{{ t('password_placeholder') }}" required minlength="4">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">{{ t('confirm_password') }} *</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-input" 
+               placeholder="{{ t('password_placeholder') }}" required minlength="4">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="preferred_language">{{ t('select_language') }}</label>
+        <select id="preferred_language" name="preferred_language" class="form-input">
+          <option value="en" {{ 'selected' if current_lang == 'en' else '' }}>English</option>
+          <option value="hi" {{ 'selected' if current_lang == 'hi' else '' }}>हिन्दी (Hindi)</option>
+          <option value="mr" {{ 'selected' if current_lang == 'mr' else '' }}>मराठी (Marathi)</option>
+        </select>
+      </div>
+
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary btn-block btn-lg">
+          {{ t('register_button') }}
+        </button>
+      </div>
+    </form>
+
+    <div class="text-center mt-4" style="padding-top: 14px; border-top: 1px solid var(--border-subtle); font-size: 0.9rem;">
+      <span class="text-muted">{{ t('already_have_account') }}</span>
+      <a href="{{ url_for('auth.login') }}" style="color: var(--primary-hover); font-weight: 700; text-decoration: none; margin-left: 6px;">
+        {{ t('login_button') }}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

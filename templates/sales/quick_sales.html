@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">{{ t('sales_title') }}</h1>
+    <p class="page-subtitle">{{ t('sales_subtitle') }}</p>
+  </div>
+</div>
+
+<div id="sales-toast-area"></div>
+
+<!-- Barcode Input & Scanner Trigger Bar -->
+<div class="card" style="border-color: var(--primary-border);">
+  <label class="form-label" for="sales-barcode-input">{{ t('sales_scan_or_type') }}</label>
+  <div class="d-flex gap-2">
+    <div style="flex: 1; position: relative;">
+      <input type="text" id="sales-barcode-input" class="form-input" 
+             placeholder="Scan barcode with camera or type number..." autofocus>
+    </div>
+    <button type="button" id="btn-open-sales-scanner" class="btn btn-secondary" title="Scan with Phone Camera">
+      📷 Scan
+    </button>
+    <button type="button" id="btn-lookup-product" class="btn btn-primary">
+      {{ t('sales_lookup_btn') }}
+    </button>
+  </div>
+</div>
+
+<!-- Product Bill & Selling Counter Area -->
+<div id="sales-bill-card" class="card" style="display: none; border: 2px solid var(--primary-border); background: linear-gradient(to bottom, #fff, var(--bg-subtle));">
+  <div class="card-header">
+    <div>
+      <div id="sales-item-name" style="font-size: 1.4rem; font-weight: 800; color: var(--text-main);">
+        Product Name
+      </div>
+      <div style="font-family: monospace; font-size: 0.85rem; color: var(--text-muted); margin-top: 2px;">
+        Barcode: <span id="sales-item-barcode"></span>
+      </div>
+    </div>
+    <div class="text-right">
+      <span class="badge badge-success" style="font-size: 0.85rem;">
+        {{ t('sales_available_stock') }}: <strong id="sales-item-stock" style="margin-left: 4px;">0</strong>
+      </span>
+      <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-dark); margin-top: 4px;" id="sales-item-price">
+        ₹0.00
+      </div>
+    </div>
+  </div>
+
+  <!-- Big Quantity Stepper -->
+  <div class="text-center">
+    <label class="form-label">{{ t('sales_quantity_sold') }}</label>
+    <div class="sales-keypad">
+      <button type="button" id="btn-stepper-minus" class="stepper-btn">－</button>
+      <div id="stepper-qty" class="stepper-value">1</div>
+      <button type="button" id="btn-stepper-plus" class="stepper-btn">＋</button>
+    </div>
+  </div>
+
+  <!-- Bill Summary Box -->
+  <div class="bill-preview">
+    <div class="bill-row">
+      <span>{{ t('sales_quantity_sold') }}:</span>
+      <span><strong id="bill-qty-display">1</strong> {{ t('units') }}</span>
+    </div>
+    <div class="bill-row">
+      <span>Unit Price:</span>
+      <span id="bill-price-display">₹0.00</span>
+    </div>
+    <div class="bill-total-row">
+      <span>{{ t('sales_total_amount') }}:</span>
+      <span id="sales-bill-total">₹0.00</span>
+    </div>
+  </div>
+
+  <!-- Big Sell Button -->
+  <div class="mt-4">
+    <button type="button" id="btn-execute-sale" class="btn btn-primary btn-block btn-lg" style="font-size: 1.25rem;">
+      ⚡ {{ t('sales_btn_sell', total='0.00') }}
+    </button>
+  </div>
+</div>
+
+<!-- Recent Sales Today -->
+<div class="card mt-4">
+  <div class="card-header">
+    <div class="card-title">
+      <span>🧾</span> {{ t('sales_recent_title') }}
+    </div>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+      <thead style="background-color: var(--bg-subtle); border-bottom: 2px solid var(--border-color); color: var(--primary-dark);">
+        <tr>
+          <th style="padding: 10px 14px;">{{ t('col_product') }}</th>
+          <th style="padding: 10px 14px;">Quantity</th>
+          <th style="padding: 10px 14px;">Price</th>
+          <th style="padding: 10px 14px;">Total</th>
+          <th style="padding: 10px 14px;">Stock Left</th>
+          <th style="padding: 10px 14px;">Time</th>
+        </tr>
+      </thead>
+      <tbody id="recent-sales-tbody">
+        {% if recent_sales and recent_sales|length > 0 %}
+          {% for s in recent_sales %}
+          <tr style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 10px 14px; font-weight: 700;">{{ s.product_name }}</td>
+            <td style="padding: 10px 14px;"><span class="badge badge-pink">{{ s.quantity_sold }} sold</span></td>
+            <td style="padding: 10px 14px;">{{ s.unit_price | currency }}</td>
+            <td style="padding: 10px 14px; font-weight: 800; color: var(--primary-dark);">{{ s.total_amount | currency }}</td>
+            <td style="padding: 10px 14px;"><span class="badge badge-success">{{ s.current_stock }} left</span></td>
+            <td style="padding: 10px 14px;"><small class="text-muted">{{ s.sale_timestamp[11:16] }}</small></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr id="no-sales-row">
+            <td colspan="6" style="padding: 24px; text-align: center; color: var(--text-light);">
+              {{ t('sales_no_recent') }}
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Camera Barcode Scanner Modal for Quick Sales -->
+<div id="sales-camera-modal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 440px; padding: 16px;">
+    <div class="d-flex justify-between align-center mb-3">
+      <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-dark);">Point Camera at Barcode</h3>
+      <button type="button" class="btn btn-outline" style="min-height: 32px; padding: 2px 8px;" id="btn-close-sales-scanner">✕</button>
+    </div>
+    
+    <div class="scanner-container" style="max-width: 100%; aspect-ratio: 4/3; margin-bottom: 0;">
+      <video id="sales-scanner-video" playsinline autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+      <div class="scanner-overlay">
+        <div class="scanner-guide-box" style="width: 80%; height: 50%;">
+          <div class="scanner-laser"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/sales.js') }}"></script>
+{% endblock %}
